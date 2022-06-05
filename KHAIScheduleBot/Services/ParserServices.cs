@@ -1,5 +1,6 @@
 ﻿using System.Xml;
 using KHAIScheduleBot.Models;
+using System.Collections.Generic;
 
 namespace KHAIScheduleBot.Services
 {
