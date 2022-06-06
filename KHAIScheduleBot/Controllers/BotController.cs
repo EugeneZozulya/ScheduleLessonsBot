@@ -122,7 +122,9 @@ namespace KHAIScheduleBot.Controllers
             var action = callbackQuery.Data switch
             {
                 "menu" => SendMainKeyboard(callbackQuery.Message),
-                "commands" => SendCommands(callbackQuery.Message)
+                "commands" => SendCommands(callbackQuery.Message),
+                "Чисельнник" or "Знаменник" or "Обидва" => ProcessWeek(
+                    new Message() { Chat = callbackQuery.Message.Chat, Text = callbackQuery.Data})
             };
 
             await action;
@@ -203,17 +205,20 @@ namespace KHAIScheduleBot.Controllers
 
         async Task<Message> ProcessGroup(Message message)
         {
+            //check input command
             string textMessage = default;
             string[] commands = message.Text.Split('_');
             if ((commands[0] == "👥Група" && commands.Length > 1) || commands.Length > 2)
                 textMessage = "Некоректно введено команду❗️";
             {
+                //set group
                 if (this.isGroup)
                 {
                     textMessage = "Групу встановлено.";
                     this.group = message.Text;
                     isGroup = !isGroup;
                 }
+                //show editional menu
                 else if (commands[0] == "👥Група")
                 {
                     textMessage = "Додаткову клавіатуру додано.Можете користуватися";
@@ -228,11 +233,13 @@ namespace KHAIScheduleBot.Controllers
                         OneTimeKeyboard = true
                     };
                 }
+                //send user message where the bot asks the user to send group
                 else if (message.Text == "🖌Встановити групу" || (commands.Length > 1 && commands[1] == "set"))
                 {
                     textMessage = "Відправьте номер групи. Букву групи вказувати українською/російською.";
                     isGroup = true;
                 }
+                //send group to the user
                 else
                 {
                     if (string.IsNullOrEmpty(this.group))
@@ -254,19 +261,30 @@ namespace KHAIScheduleBot.Controllers
         async Task<Message> ProcessWeek(Message message)
         {
             string textMessage = default;
+            IReplyMarkup replyMarkup = this.botKeyboard;
+            string[] types = new string[] { "Чисельнник", "Знаменник", "Обидва" };
             string[] commands = message.Text.Split('_');
+
+            //check input command
             if ((commands[0] == "🗂Тиждень" && commands.Length > 1) || commands.Length > 2)
                 textMessage = "Некоректно введено команду❗️";
             {
+                //set typeofweek
                 if (this.isTypeOfWeek)
                 {
-                    textMessage = "Тиждень встановлено.";
-                    this.typeOfWeek = message.Text;
-                    isTypeOfWeek = !isTypeOfWeek;
+                    if (types.Contains(message.Text))
+                    {
+                        textMessage = "Тип тижню встановлено.";
+                        this.typeOfWeek = message.Text;
+                        isTypeOfWeek = !isTypeOfWeek;
+                    }
+                    else
+                        textMessage = "Некоректний тип тижню❗️Оберіть тип знову.";
                 }
+                //show editional menu
                 else if (commands[0] == "🗂Тиждень")
                 {
-                    textMessage = "Додаткову клавіатуру додано.Можете користуватися";
+                    textMessage = "Додаткову клавіатуру додано.Можете користуватися.";
                     botKeyboard = new ReplyKeyboardMarkup(
                         new[] {
                             new KeyboardButton[] { "🔎Показати тиждень" },
@@ -277,12 +295,25 @@ namespace KHAIScheduleBot.Controllers
                         ResizeKeyboard = true,
                         OneTimeKeyboard = true
                     };
+                    replyMarkup = botKeyboard;
                 }
+                //send user message with inline keyboard for select typeofweek
                 else if (message.Text == "🖌Встановити тиждень" || (commands.Length > 1 && commands[1] == "set"))
                 {
-                    textMessage = "Відправьте тип тижня. Допускаються такі варіанти: Знаменник, Чисельник, Обидва";
-                    isTypeOfWeek = true;
+                    textMessage = "🗂Оберіть тип тижня🗂";
+                    replyMarkup = new InlineKeyboardMarkup(
+                        new[]
+                        {
+                            // first row
+                            new []{ InlineKeyboardButton.WithCallbackData(types[0]) },
+                            // second row
+                            new [] { InlineKeyboardButton.WithCallbackData(types[1]) },
+                            // third row
+                            new [] { InlineKeyboardButton.WithCallbackData(types[2]) }
+                        });
+                    isTypeOfWeek = true; 
                 }
+                //send type of week to the user 
                 else
                 {
                     if (string.IsNullOrEmpty(this.typeOfWeek))
@@ -294,7 +325,7 @@ namespace KHAIScheduleBot.Controllers
 
             return await _botClient.SendTextMessageAsync(chatId: message.Chat.Id,
                                                         text: textMessage,
-                                                        replyMarkup: this.botKeyboard);
+                                                        replyMarkup: replyMarkup);
         }
         async Task<Message> ProcessSchedule(Message message)
         {
