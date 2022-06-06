@@ -1,13 +1,12 @@
 ﻿using System.Xml;
 using KHAIScheduleBot.Models;
-using System.Collections.Generic;
 
 namespace KHAIScheduleBot.Services
 {
     /// <summary>
     /// Parse schedule from the file.
     /// </summary>
-    public class ParserServices
+    public class ParserServices : IParserService
     {
         /// <summary>
         /// Loaded xml document. 
@@ -30,13 +29,6 @@ namespace KHAIScheduleBot.Services
             xmlDocument.Load(path);
         }
 
-        /// <summary>
-        /// Get schedule of the couples for some group.
-        /// </summary>
-        /// <param name="groupId">Group's id</param>
-        /// <param name="dayOfWeek">Some day of week, such as: Monday, Tuesday, Wednesday, Thursday, Friday, null - all week.</param>
-        /// <param name="typeWeek">Some type of week, such as: denominator, numerator, null - both type.</param>
-        /// <returns>Group class object with parsed schedule from file. </returns>
         public Group GetSchedule(string groupId, string dayOfWeek = null, string typeWeek = null)
         {
             Group group = new Group();

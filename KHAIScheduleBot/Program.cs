@@ -4,6 +4,7 @@ using Telegram.Bot.Types.Enums;
 using KHAIScheduleBot.Services;
 using KHAIScheduleBot;
 using Telegram.Bot.Types;
+using Telegram.Bot.Types.ReplyMarkups;
 
 IFileConfig _fileConfig = new FileConfig();
 TelegramBotClient bot = new TelegramBotClient(_fileConfig.FileToken);
@@ -13,9 +14,11 @@ Console.Title = me.Username ?? "My awesome Bot";
 
 using var cts = new CancellationTokenSource();
 
+HandlersService handlersService = new HandlersService(new ParserServices(_fileConfig));
+
 // StartReceiving does not block the caller thread. Receiving is done on the ThreadPool.
-bot.StartReceiving(updateHandler: HandlersService.HandleUpdateAsync,
-                   errorHandler: HandlersService.HandleErrorAsync,
+bot.StartReceiving(updateHandler: handlersService.HandleUpdateAsync,
+                   errorHandler: handlersService.HandleErrorAsync,
                    receiverOptions: new ReceiverOptions()
                    {
                        AllowedUpdates = Array.Empty<UpdateType>()
