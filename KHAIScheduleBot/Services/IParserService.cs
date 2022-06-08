@@ -15,10 +15,9 @@ namespace KHAIScheduleBot.Services
         /// <returns>Group class object with parsed schedule from file. </returns>
         Group GetSchedule(string groupId, string dayOfWeek = null, string typeWeek = null);
         /// <summary>
-        /// Checks if there is a group with such id. 
+        /// Get all groups id.
         /// </summary>
-        /// <param name="groupid">Group id</param>
-        /// <returns>True - group exist, false - not exist</returns>
-        bool GroupExist(string groupid);
+        /// <returns>List<string> with groups id if they are, otherwise - null.</returns>
+        List<String> GetAllGroupsId();
     }
 }

@@ -125,10 +125,22 @@ namespace KHAIScheduleBot.Services
             return discipline;
         }
         /// <summary>
-        /// Checks if there is a group with such id. 
+        /// Get all groups id.
         /// </summary>
-        /// <param name="groupid">Group id</param>
-        /// <returns>True - group exist, false - not exist</returns>
-        public bool GroupExist(string groupid) => xmlDocument.GetElementById(groupid) != null; 
+        /// <returns>List<string> with groups id if they are, otherwise - null.</returns>
+        public List<string> GetAllGroupsId()
+        {
+            List<string> groupsId = null;
+            XmlNodeList groupList = xmlDocument.GetElementsByTagName("group");
+            if (groupList.Count > 1)
+            {
+                groupsId = new List<string>();
+                foreach (XmlNode group in groupList)
+                    groupsId.Add(group.Attributes["id"].Value);
+            }
+
+            return groupsId;
+
+        }
     }
 }

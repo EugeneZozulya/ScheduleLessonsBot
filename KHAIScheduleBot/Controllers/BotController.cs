@@ -29,11 +29,21 @@ namespace KHAIScheduleBot.Controllers
         private bool isGroup;
         private bool isDay;
         private bool isTypeOfWeek;
+        private List<string> groupsID;
+        private string[] days;
+        private string[] weeks;
         #endregion
+        /// <summary>
+        /// Contructor for initialize BotController.
+        /// </summary>
+        /// <param name="parserService">Service for parsing the data.</param>
+        /// <param name="botConfig">Service for reading config information from config file.</param>
         public BotController(IParserService parserService, IBotConfig botConfig)
         {
             _parserService = parserService;
             _botConfig = botConfig;
+            days = new string[] { "Понеділок", "Вівторок", "Середа", "Четвер", "П'ятниця" };
+            weeks = new string[] { "Чисельник", "Знаменник", "Обидва" };
         }
         /// <summary>
         /// Procces handle error.
@@ -83,7 +93,6 @@ namespace KHAIScheduleBot.Controllers
         // Process Message received.
         async Task BotOnMessageReceived(Message message)
         {
-            Console.WriteLine($"Receive message type: {message.Type}");
             if (message.Type != MessageType.Text)
                 return;
 
@@ -118,24 +127,36 @@ namespace KHAIScheduleBot.Controllers
 
             };
             Message sentMessage = await action;
-            Console.WriteLine($"The message was sent with id: {sentMessage.MessageId}");
         }
 
         // Process Inline Keyboard callback data
         async Task BotOnCallbackQueryReceived(CallbackQuery callbackQuery)
         {
-            switch (callbackQuery.Data)
+            string data = callbackQuery.Data;
+
+            if (days.Contains(data))
+                data = "day";
+            else if (weeks.Contains(data))
+                data = "week";
+            else if (groupsID != null && groupsID.Contains(data))
+                data = "group";
+
+            switch (data)
             {
                 case "menu": await SendMainKeyboard(callbackQuery.Message); break;
                 case "commands": await SendCommands(callbackQuery.Message); break;
-                case "Чисельник":
-                case "Знаменник":
-                case "Обидва": isTypeOfWeek = true; await ProcessWeek(new Message() { Chat = callbackQuery.Message.Chat, Text = callbackQuery.Data }); break;
-                case "Понеділок":
-                case "Вівторок":
-                case "Середа":
-                case "Четвер":
-                case "П'ятниця": isDay = true; await ProcessSchedule(new Message() { Chat = callbackQuery.Message.Chat, Text = callbackQuery.Data }); break;
+                case "week": 
+                    isTypeOfWeek = true; 
+                    await ProcessWeek(new Message() { Chat = callbackQuery.Message.Chat, Text = callbackQuery.Data }); 
+                    break;
+                case "day": 
+                    isDay = true; 
+                    await ProcessSchedule(new Message() { Chat = callbackQuery.Message.Chat, Text = callbackQuery.Data }); 
+                    break;
+                case "group":
+                    isGroup = true;
+                    await ProcessGroup(new Message() { Chat = callbackQuery.Message.Chat, Text = callbackQuery.Data });
+                    break;
             }
         }
 
@@ -276,10 +297,22 @@ namespace KHAIScheduleBot.Controllers
             string textMessage = default;
             string[] commands = message.Text.Split('_');
 
+            //send user message where the bot asks the user to select group
+            if (message.Text == "🖌Встановити групу" || (commands.Length > 1 && commands[1].Contains("set")))
+            {
+                this.groupsID = _parserService.GetAllGroupsId();
+                textMessage = "👥Оберіть групу👥";
+                IReplyMarkup inlineReplyMarkup = FillGroupIdInlineKeyboard();
+                isGroup = true;
+                return await _botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                                        text: textMessage,
+                                                        replyMarkup: inlineReplyMarkup);
+            }
+
             //set group
             if (this.isGroup)
             {
-                if (_parserService.GroupExist(message.Text))
+                if (this.groupsID.IndexOf(message.Text)>0)
                 {
                     textMessage = "Групу встановлено.";
                     this.groupId = message.Text;
@@ -287,12 +320,6 @@ namespace KHAIScheduleBot.Controllers
                 }
                 else
                     textMessage = "Такої групи не існує. Введіть знову.";
-            }
-            //send user message where the bot asks the user to send group
-            else if (message.Text == "🖌Встановити групу" || (commands.Length > 1 && commands[1].Contains("set")))
-            {
-                textMessage = "Відправьте номер групи. Букву групи вказувати українською/російською.";
-                isGroup = true;
             }
             //send group to the user
             else
@@ -311,7 +338,6 @@ namespace KHAIScheduleBot.Controllers
         async Task<Message> ProcessWeek(Message message)
         {
             string textMessage = default;
-            string[] types = new string[] { "Чисельник", "Знаменник", "Обидва" };
             string[] commands = message.Text.Split('_');
             
             //send user message with inline keyboard for select typeofweek
@@ -322,11 +348,11 @@ namespace KHAIScheduleBot.Controllers
                     new[]
                     {
                         // first row
-                        new []{ InlineKeyboardButton.WithCallbackData(types[0]) },
+                        new []{ InlineKeyboardButton.WithCallbackData(this.weeks[0]) },
                         // second row
-                        new [] { InlineKeyboardButton.WithCallbackData(types[1]) },
+                        new [] { InlineKeyboardButton.WithCallbackData(this.weeks[1]) },
                         // third row
-                        new [] { InlineKeyboardButton.WithCallbackData(types[2]) }
+                        new [] { InlineKeyboardButton.WithCallbackData(this.weeks[2]) }
                     });
                 isTypeOfWeek = true;
                 return await _botClient.SendTextMessageAsync(chatId: message.Chat.Id,
@@ -336,7 +362,7 @@ namespace KHAIScheduleBot.Controllers
             //set typeofweek
             if (this.isTypeOfWeek)
             {
-                if (types.Contains(message.Text))
+                if (this.weeks.Contains(message.Text))
                 {
                     textMessage = "Тип тижню встановлено.";
                     this.typeOfWeek = message.Text;
@@ -363,7 +389,6 @@ namespace KHAIScheduleBot.Controllers
         {
             string textMessage = default;
             ParseMode? mode = null;
-            string[] days = new string[] { "Понеділок", "Вівторок", "Середа", "Четвер", "П'ятниця" };
             string[] commands = message.Text.Split('_');
             if (!string.IsNullOrEmpty(this.groupId))
             {
@@ -375,15 +400,15 @@ namespace KHAIScheduleBot.Controllers
                             new[]
                             {
                             // first row
-                            new []{ InlineKeyboardButton.WithCallbackData(days[0]) },
+                            new []{ InlineKeyboardButton.WithCallbackData(this.days[0]) },
                             // second row
-                            new [] { InlineKeyboardButton.WithCallbackData(days[1]) },
+                            new [] { InlineKeyboardButton.WithCallbackData(this.days[1]) },
                             // third row
-                            new [] { InlineKeyboardButton.WithCallbackData(days[2]) },
+                            new [] { InlineKeyboardButton.WithCallbackData(this.days[2]) },
                             // fourth row
-                            new [] { InlineKeyboardButton.WithCallbackData(days[3]) },
+                            new [] { InlineKeyboardButton.WithCallbackData(this.days[3]) },
                             // fifth row
-                            new [] { InlineKeyboardButton.WithCallbackData(days[4]) }
+                            new [] { InlineKeyboardButton.WithCallbackData(this.days[4]) }
                             });
                     isDay = true;
                     return await _botClient.SendTextMessageAsync(chatId: message.Chat.Id,
@@ -449,6 +474,30 @@ namespace KHAIScheduleBot.Controllers
             }
 
 
+        }
+
+        //create inline keyboard with the groups id.
+        InlineKeyboardMarkup FillGroupIdInlineKeyboard()
+        {
+            int countGroup = this.groupsID.Count;
+            int numColumns = 3;
+            int numRows = (int)Math.Ceiling((decimal)countGroup / 3);
+            InlineKeyboardButton[][] inlineKeyboardButtons = new InlineKeyboardButton[numRows][];
+            
+            for(int i = 0; i<numRows; i++)
+            {
+                int numElements = numColumns;
+                if(i == numRows - 1)
+                    numElements = countGroup - i * numColumns;
+
+                inlineKeyboardButtons[i] = new InlineKeyboardButton[numElements];
+
+                for (int j = 0; j < numElements; j++)
+                    inlineKeyboardButtons[i][j] = InlineKeyboardButton.WithCallbackData(this.groupsID[(i * numColumns + j)]);
+            }
+            
+            return new InlineKeyboardMarkup(inlineKeyboardButtons);
+            
         }
     }
 }
