@@ -243,6 +243,7 @@ namespace KHAIScheduleBot.Controllers
             return await _botClient.SendTextMessageAsync(chatId: message.Chat.Id,
                                                         text: commands);
         }
+        // Send a help message
         async Task<Message> SendHelpMessage(Message message)
         {
             const string help = "❗️Такої команди не усніє❗️ скористайтеся командою /help або введіть / для переглянуд усіх" +
@@ -251,7 +252,7 @@ namespace KHAIScheduleBot.Controllers
             return await _botClient.SendTextMessageAsync(chatId: message.Chat.Id,
                                                         text: help);
         }
-
+        // Process set or get group commands
         async Task<Message> ProcessGroup(Message message)
         {
             string textMessage = default;
@@ -287,6 +288,7 @@ namespace KHAIScheduleBot.Controllers
             return await _botClient.SendTextMessageAsync(chatId: message.Chat.Id,
                                                         text: textMessage);
         }
+        // Process set or get week commands
         async Task<Message> ProcessWeek(Message message)
         {
             string textMessage = default;
@@ -336,7 +338,7 @@ namespace KHAIScheduleBot.Controllers
             return await _botClient.SendTextMessageAsync(chatId: message.Chat.Id,
                                                         text: textMessage);
         }
-
+        // proccess get schedule commands 
         async Task<Message> ProcessSchedule(Message message)
         {
             string textMessage = default;
@@ -387,7 +389,8 @@ namespace KHAIScheduleBot.Controllers
             return await _botClient.SendTextMessageAsync(chatId: message.Chat.Id,
                                              text: textMessage);
         }
-
+        //check command for correctness.
+        /* command - command from user */
         void CheckCommands(ref string command)
         {
             string[] commands = new string[] { "/start", "/keyboard", "/help", "/group_set", "/week_set", "/group_get", "/week_get", "/schedule_week_get",
