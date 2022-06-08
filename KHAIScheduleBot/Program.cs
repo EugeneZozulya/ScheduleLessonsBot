@@ -17,8 +17,8 @@ using var cts = new CancellationTokenSource();
 BotController handlersService = new BotController(new ParserServices(_fileConfig));
 
 //set commands for bot
-string[] commands = new string[] { "/help", "/group_set", "/week_set", "/day_set", "/group_get", "/week_get", "/day_get", "/schedule_get" };
-string[] descriptions = new string[] { "показати команди","встановити групу", "встановити тип тижня", "встановити день", "показати групу", "показати тип тижня", "показати день", "показати розклад" };
+string[] commands = new string[] { "/help", "/group_set", "/week_set", "/group_get", "/week_get", "/schedule_day_get", "/schedule_week_get", "/keyboard" };
+string[] descriptions = new string[] { "показати команди","встановити групу", "встановити тип тижня", "показати групу", "показати тип тижня", "показати розклад на день", "показати розклад на тиждень", "показати клавіатуру" };
 BotCommand[] botCommands = new BotCommand[commands.Length];
 for (int i = 0; i < commands.Length; i++)
 {

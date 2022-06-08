@@ -86,30 +86,32 @@ namespace KHAIScheduleBot.Controllers
             if (message.Type != MessageType.Text)
                 return;
 
-            Task<Message> action = null;
+            string text = message.Text;
 
-            //check input message when user sent value set day,group and typeofweek.
-            CheckReservedWords(message.Text);
+            //check command for correctness.
+            CheckCommands(ref text);
 
-            string messageText = message.Text!.Split('_')[0];
-            if (message.Text == "🖌Встановити групу" || message.Text == "🔎Показати групу" || isGroup)
+            string messageText = text.Split('_')[0];
+
+            if (text == "🖌Встановити групу" || text == "🔎Показати групу" || isGroup)
                 messageText = "/group";
-            if (message.Text == "🖌Встановити тиждень" || message.Text == "🔎Показати тиждень" || isTypeOfWeek)
+            if (text == "🖌Встановити тиждень" || text == "🔎Показати тиждень" || isTypeOfWeek)
                 messageText = "/week";
-            switch (messageText)
+            if (isDay)
+                messageText = "/schedule";
+
+            Task<Message> action = messageText switch
             {
-                case "/start": action = SendInlineKeyboard(message); break;
-                case "💻Команди":
-                case "/help": action = SendCommands(message); break;
-                case "👥Група":
-                case "/group": action = ProcessGroup(message); break;
-                case "📅Розклад на день":
-                case "/day": action = ProcessDay(message); break;
-                case "🗂Тиждень":
-                case "/week": action = ProcessWeek(message); break;
-                case "schedule": action = ProcessSchedule(message); break;
-                case "🔙Головне меню": action = SendMainKeyboard(message); break;
-                default: break;
+                "/start" => SendInlineKeyboard(message),
+                "/keyboard" => SendMainKeyboard(message),
+                "👥Група" => SendGroupKeyboard(message),
+                "/group" => ProcessGroup(message),
+                "🗂Тиждень" => SendWeekKeyboard(message),
+                "/week" => ProcessWeek(message),
+                "📅Розклад на день" or "🗓Розклад на тиждень" or "/schedule" => ProcessSchedule(message),
+                "🔙Головне меню" => SendMainKeyboard(message),
+                "💻Команди" or "/help" => SendCommands(message),
+                _ => SendHelpMessage(message)
 
             };
             Message sentMessage = await action;
@@ -119,15 +121,19 @@ namespace KHAIScheduleBot.Controllers
         // Process Inline Keyboard callback data
         async Task BotOnCallbackQueryReceived(CallbackQuery callbackQuery)
         {
-            var action = callbackQuery.Data switch
+            switch (callbackQuery.Data)
             {
-                "menu" => SendMainKeyboard(callbackQuery.Message),
-                "commands" => SendCommands(callbackQuery.Message),
-                "Чисельник" or "Знаменник" or "Обидва" => ProcessWeek(
-                    new Message() { Chat = callbackQuery.Message.Chat, Text = callbackQuery.Data})
-            };
-
-            await action;
+                case "menu": await SendMainKeyboard(callbackQuery.Message); break;
+                case "commands": await SendCommands(callbackQuery.Message); break;
+                case "Чисельник":
+                case "Знаменник":
+                case "Обидва": isTypeOfWeek = true; await ProcessWeek(new Message() { Chat = callbackQuery.Message.Chat, Text = callbackQuery.Data }); break;
+                case "Понеділок":
+                case "Вівторок":
+                case "Середа":
+                case "Четвер":
+                case "П'ятниця": isDay = true; await ProcessSchedule(new Message() { Chat = callbackQuery.Message.Chat, Text = callbackQuery.Data }); break;
+            }
         }
 
         // Process unknown update handler.
@@ -163,8 +169,7 @@ namespace KHAIScheduleBot.Controllers
                                                         replyMarkup: inlineKeyboard);
         }
 
-        // Send reply keyboard
-        // Process responses in BotOnCallbackQueryReceived handler
+        // Send reply main keyboard
         async Task<Message> SendMainKeyboard(Message message)
         {
             ReplyKeyboardMarkup replyKeyboardMarkup = new(
@@ -184,6 +189,43 @@ namespace KHAIScheduleBot.Controllers
                                                         text: "Головну клавіатру додано. Можете користуватися.",
                                                         replyMarkup: replyKeyboardMarkup);
         }
+        
+        // Send reply group keyboard
+        async Task<Message> SendGroupKeyboard(Message message)
+        {
+            botKeyboard = new ReplyKeyboardMarkup(
+                new[] {
+                        new KeyboardButton[] { "🔎Показати групу" },
+                        new KeyboardButton[] { "🖌Встановити групу" },
+                        new KeyboardButton[] { "🔙Головне меню" },
+                })
+            {
+                ResizeKeyboard = true,
+                OneTimeKeyboard = true
+            };
+
+            return await _botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                        text: "Додаткову клавіатуру додано.Можете користуватися",
+                                        replyMarkup: this.botKeyboard);
+        }
+        // Send reply week keyboard
+        async Task<Message> SendWeekKeyboard(Message message)
+        {
+            botKeyboard = new ReplyKeyboardMarkup(
+                new[] {
+                        new KeyboardButton[] { "🔎Показати тиждень" },
+                        new KeyboardButton[] { "🖌Встановити тиждень" },
+                        new KeyboardButton[] { "🔙Головне меню" },
+                })
+            {
+                ResizeKeyboard = true,
+                OneTimeKeyboard = true
+            };
+
+            return await _botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                        text: "Додаткову клавіатуру додано.Можете користуватися",
+                                        replyMarkup: this.botKeyboard);
+        }
 
         // Send bot commands
         async Task<Message> SendCommands(Message message)
@@ -191,166 +233,184 @@ namespace KHAIScheduleBot.Controllers
             const string commands = "💻Команди:💻\n" +
                                  "/group_set      -> встановити групу\n" +
                                  "/week_set       -> встановити тип тижня\n" +
-                                 "/day_set        -> встановити день\n" +
                                  "/group_get      -> показати групу\n" +
                                  "/week_get       -> показати тип тижня\n" +
-                                 "/day_get        -> показати день для пошуку\n" +
-                                 "/schedule_get   -> показати розклад\n" +
-                                 "/help           -> показати команди\n";
+                                 "/schedule_day_get   -> показати розклад на день\n" +
+                                 "/schedule_week_get  -> показати розклад на тиждень\n" +
+                                 "/help           -> показати команди\n" +
+                                 "/keyboard       -> показати клавіатуру\n";
 
             return await _botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                                        text: commands,
-                                                        replyMarkup: this.botKeyboard);
+                                                        text: commands);
+        }
+        async Task<Message> SendHelpMessage(Message message)
+        {
+            const string help = "❗️Такої команди не усніє❗️ скористайтеся командою /help або введіть / для переглянуд усіх" +
+                "достуних команд. Також можете скористуватися клавіатурою.";
+
+            return await _botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                                        text: help);
         }
 
         async Task<Message> ProcessGroup(Message message)
         {
-            //check input command
             string textMessage = default;
             string[] commands = message.Text.Split('_');
-            if ((commands[0] == "👥Група" && commands.Length > 1) || commands.Length > 2)
-                textMessage = "Некоректно введено команду❗️";
+
+            //set group
+            if (this.isGroup)
             {
-                //set group
-                if (this.isGroup)
+                if (_parserService.GroupExist(message.Text))
                 {
                     textMessage = "Групу встановлено.";
                     this.group = message.Text;
                     isGroup = !isGroup;
                 }
-                //show editional menu
-                else if (commands[0] == "👥Група")
-                {
-                    textMessage = "Додаткову клавіатуру додано.Можете користуватися";
-                    botKeyboard = new ReplyKeyboardMarkup(
-                        new[] {
-                            new KeyboardButton[] { "🔎Показати групу" },
-                            new KeyboardButton[] { "🖌Встановити групу" },
-                            new KeyboardButton[] { "🔙Головне меню" },
-                        })
-                    {
-                        ResizeKeyboard = true,
-                        OneTimeKeyboard = true
-                    };
-                }
-                //send user message where the bot asks the user to send group
-                else if (message.Text == "🖌Встановити групу" || (commands.Length > 1 && commands[1] == "set"))
-                {
-                    textMessage = "Відправьте номер групи. Букву групи вказувати українською/російською.";
-                    isGroup = true;
-                }
-                //send group to the user
                 else
-                {
-                    if (string.IsNullOrEmpty(this.group))
-                        textMessage = "Групу не встановленно.";
-                    else
-                        textMessage = $"Група: {this.group}";
-                }
+                    textMessage = "Такої групи не існує. Введіть знову.";
+            }
+            //send user message where the bot asks the user to send group
+            else if (message.Text == "🖌Встановити групу" || (commands.Length > 1 && commands[1] == "set"))
+            {
+                textMessage = "Відправьте номер групи. Букву групи вказувати українською/російською.";
+                isGroup = true;
+            }
+            //send group to the user
+            else
+            {
+                if (string.IsNullOrEmpty(this.group))
+                    textMessage = "Групу не встановленно.";
+                else
+                    textMessage = $"Група: {this.group}";
             }
 
             return await _botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                                        text: textMessage,
-                                                        replyMarkup: this.botKeyboard);
-        }
-        async Task<Message> ProcessDay(Message message)
-        {
-            string textMessage = default;
-            IReplyMarkup replyMarkup = this.botKeyboard;
-            string[] types = new string[] { "Чисельник", "Знаменник", "Обидва" };
-            string[] commands = message.Text.Split('_');
-            return await _botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                            text: "cum");
+                                                        text: textMessage);
         }
         async Task<Message> ProcessWeek(Message message)
         {
             string textMessage = default;
-            IReplyMarkup replyMarkup = this.botKeyboard;
             string[] types = new string[] { "Чисельник", "Знаменник", "Обидва" };
             string[] commands = message.Text.Split('_');
-
-            //check input command
-            if ((commands[0] == "🗂Тиждень" && commands.Length > 1) || commands.Length > 2)
-                textMessage = "Некоректно введено команду❗️";
+            
+            //send user message with inline keyboard for select typeofweek
+            if (message.Text == "🖌Встановити тиждень" || (commands.Length > 1 && commands[1] == "set"))
             {
-                //set typeofweek
-                if (this.isTypeOfWeek)
-                {
-                    if (types.Contains(message.Text))
+                textMessage = "🗂Оберіть тип тижня🗂";
+                IReplyMarkup replyMarkup = new InlineKeyboardMarkup(
+                    new[]
                     {
-                        textMessage = "Тип тижню встановлено.";
-                        this.typeOfWeek = message.Text;
-                        isTypeOfWeek = !isTypeOfWeek;
-                    }
-                    else
-                        textMessage = "Некоректний тип тижню❗️Оберіть тип знову.";
-                }
-                //show editional menu
-                else if (commands[0] == "🗂Тиждень")
+                        // first row
+                        new []{ InlineKeyboardButton.WithCallbackData(types[0]) },
+                        // second row
+                        new [] { InlineKeyboardButton.WithCallbackData(types[1]) },
+                        // third row
+                        new [] { InlineKeyboardButton.WithCallbackData(types[2]) }
+                    });
+                isTypeOfWeek = true;
+                return await _botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                            text: textMessage,
+                                            replyMarkup: replyMarkup);
+            }
+            //set typeofweek
+            if (this.isTypeOfWeek)
+            {
+                if (types.Contains(message.Text))
                 {
-                    textMessage = "Додаткову клавіатуру додано.Можете користуватися.";
-                    botKeyboard = new ReplyKeyboardMarkup(
-                        new[] {
-                            new KeyboardButton[] { "🔎Показати тиждень" },
-                            new KeyboardButton[] { "🖌Встановити тиждень" },
-                            new KeyboardButton[] { "🔙Головне меню" },
-                        })
-                    {
-                        ResizeKeyboard = true,
-                        OneTimeKeyboard = true
-                    };
-                    replyMarkup = botKeyboard;
+                    textMessage = "Тип тижню встановлено.";
+                    this.typeOfWeek = message.Text;
+                    isTypeOfWeek = !isTypeOfWeek;
                 }
-                //send user message with inline keyboard for select typeofweek
-                else if (message.Text == "🖌Встановити тиждень" || (commands.Length > 1 && commands[1] == "set"))
-                {
-                    textMessage = "🗂Оберіть тип тижня🗂";
-                    replyMarkup = new InlineKeyboardMarkup(
-                        new[]
-                        {
-                            // first row
-                            new []{ InlineKeyboardButton.WithCallbackData(types[0]) },
-                            // second row
-                            new [] { InlineKeyboardButton.WithCallbackData(types[1]) },
-                            // third row
-                            new [] { InlineKeyboardButton.WithCallbackData(types[2]) }
-                        });
-                    isTypeOfWeek = true; 
-                }
-                //send type of week to the user 
                 else
-                {
-                    if (string.IsNullOrEmpty(this.typeOfWeek))
-                        textMessage = "Тип тижня не встановленно.";
-                    else
-                        textMessage = $"Тип тижня: {this.typeOfWeek}";
-                }
+                    textMessage = "Некоректний тип тижню❗️Оберіть тип знову.";
+            }
+            //send type of week to the user 
+            else
+            {
+                if (string.IsNullOrEmpty(this.typeOfWeek))
+                    textMessage = "Тип тижня не встановленно.";
+                else
+                    textMessage = $"Тип тижня: {this.typeOfWeek}";
             }
 
             return await _botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                                        text: textMessage,
-                                                        replyMarkup: replyMarkup);
-        }
-        async Task<Message> ProcessSchedule(Message message)
-        {
-            return await _botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                            text: "cum");
+                                                        text: textMessage);
         }
 
-        void CheckReservedWords(string inputData)
+        async Task<Message> ProcessSchedule(Message message)
         {
+            string textMessage = default;
+            string[] days = new string[] { "Понеділок", "Вівторок", "Середа", "Четвер", "П'ятниця" };
+            string[] commands = message.Text.Split('_');
+            
+            //ask to select day
+            if (commands[0] == "📅Розклад на день" || commands[1] == "day")
+            {
+                textMessage = "📅Оберіть день📅";
+                IReplyMarkup replyMarkup = new InlineKeyboardMarkup(
+                        new[]
+                        {
+                            // first row
+                            new []{ InlineKeyboardButton.WithCallbackData(days[0]) },
+                            // second row
+                            new [] { InlineKeyboardButton.WithCallbackData(days[1]) },
+                            // third row
+                            new [] { InlineKeyboardButton.WithCallbackData(days[2]) },
+                            // fourth row
+                            new [] { InlineKeyboardButton.WithCallbackData(days[3]) },
+                            // fifth row
+                            new [] { InlineKeyboardButton.WithCallbackData(days[4]) }
+                        });
+                isDay = true;
+                return await _botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                 text: textMessage,
+                                 replyMarkup: replyMarkup);
+
+            }
+            //get schedule for some day
+            if (this.isDay)
+            {
+                if (days.Contains(message.Text))
+                {
+                    isDay = !isDay;
+                }
+                else
+                    textMessage = "Некоректні дані❗️Оберіть день знову.";
+            }
+
+            //get schedule for whole week
+            else
+            {
+
+            }
+
+            return await _botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                             text: textMessage);
+        }
+
+        void CheckCommands(ref string command)
+        {
+            string[] commands = new string[] { "/start", "/keyboard", "/help", "/group_set", "/week_set", "/group_get", "/week_get", "/schedule_week_get",
+                "/schedule_day_get", "🔎Показати тиждень", "🖌Встановити тиждень", "🔙Головне меню","🖌Встановити групу", "🔎Показати групу","💻Команди",
+                "👥Група","📅Розклад на день", "🗓Розклад на тиждень", "🗂Тиждень"};
+            
+            bool isCorrect = commands.Contains(command);
+            
             if (isGroup || isDay || isTypeOfWeek)
             {
-                string[] reserved = new string[] { "/help", "/group_set", "/week_set", "/day_set", "/group_get", "/week_get", "/day_get",
-                "/schedule_get", "🔎Показати тиждень", "🖌Встановити тиждень", "🔙Головне меню","🖌Встановити групу", "🔎Показати групу","💻Команди",
-                "👥Група","📅Розклад на день", "🗓Розклад на тиждень"};
-                if (reserved.Contains(inputData))
+                if (isCorrect)
                 {
                     isGroup = false;
                     isDay = false;
                     isTypeOfWeek = false;
                 }
             }
+            else
+            {
+                if (!isCorrect)
+                    command = "uncorrect";
+            }
+
 
         }
     }
