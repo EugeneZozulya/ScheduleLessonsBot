@@ -60,7 +60,7 @@ namespace KHAIScheduleBot.Services
                     {
                         if (i == 0 && coupleChilds.Count == 2 && typeWeek == "Знаменник")
                             continue;
-                        if (i == 1 && typeWeek == "Чисельнник")
+                        if (i == 1 && typeWeek == "Чисельник")
                             break;
                         CoupleType coupleType = new CoupleType();
                         coupleType.Classroom = coupleChilds[i].FirstChild.InnerText;
@@ -124,5 +124,11 @@ namespace KHAIScheduleBot.Services
             }
             return discipline;
         }
+        /// <summary>
+        /// Checks if there is a group with such id. 
+        /// </summary>
+        /// <param name="groupid">Group id</param>
+        /// <returns>True - group exist, false - not exist</returns>
+        public bool GroupExist(string groupid) => xmlDocument.GetElementById(groupid) != null; 
     }
 }

@@ -123,7 +123,7 @@ namespace KHAIScheduleBot.Controllers
             {
                 "menu" => SendMainKeyboard(callbackQuery.Message),
                 "commands" => SendCommands(callbackQuery.Message),
-                "Чисельнник" or "Знаменник" or "Обидва" => ProcessWeek(
+                "Чисельник" or "Знаменник" or "Обидва" => ProcessWeek(
                     new Message() { Chat = callbackQuery.Message.Chat, Text = callbackQuery.Data})
             };
 
@@ -255,6 +255,10 @@ namespace KHAIScheduleBot.Controllers
         }
         async Task<Message> ProcessDay(Message message)
         {
+            string textMessage = default;
+            IReplyMarkup replyMarkup = this.botKeyboard;
+            string[] types = new string[] { "Чисельник", "Знаменник", "Обидва" };
+            string[] commands = message.Text.Split('_');
             return await _botClient.SendTextMessageAsync(chatId: message.Chat.Id,
                                             text: "cum");
         }
@@ -262,7 +266,7 @@ namespace KHAIScheduleBot.Controllers
         {
             string textMessage = default;
             IReplyMarkup replyMarkup = this.botKeyboard;
-            string[] types = new string[] { "Чисельнник", "Знаменник", "Обидва" };
+            string[] types = new string[] { "Чисельник", "Знаменник", "Обидва" };
             string[] commands = message.Text.Split('_');
 
             //check input command

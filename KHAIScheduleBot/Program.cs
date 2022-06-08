@@ -4,7 +4,6 @@ using Telegram.Bot.Types.Enums;
 using KHAIScheduleBot.Services;
 using KHAIScheduleBot;
 using Telegram.Bot.Types;
-using Telegram.Bot.Types.ReplyMarkups;
 using KHAIScheduleBot.Controllers;
 
 IFileConfig _fileConfig = new FileConfig();
@@ -26,6 +25,7 @@ for (int i = 0; i < commands.Length; i++)
     botCommands[i] = new BotCommand() { Command = commands[i], Description = descriptions[i] };
 }
 await bot.SetMyCommandsAsync(botCommands);
+
 // StartReceiving does not block the caller thread. Receiving is done on the ThreadPool.
 bot.StartReceiving(updateHandler: handlersService.HandleUpdateAsync,
                    errorHandler: handlersService.HandleErrorAsync,
