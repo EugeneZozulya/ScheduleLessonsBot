@@ -10,7 +10,7 @@ namespace KHAIScheduleBot.Models
         public List<CoupleType> Types { get; set; } = new List<CoupleType>();
         public override string ToString()
         {
-            return $":time{this.Time}:time\n" + string.Join("\n-----------------------------------------------------------------\n", this.Types) + '\n';
+            return $"🕔{this.Time}🕔\n\n" + string.Join("\n------------------------------------\n", this.Types) + '\n';
         }
     }
 }

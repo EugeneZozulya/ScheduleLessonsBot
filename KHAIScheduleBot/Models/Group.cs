@@ -8,7 +8,7 @@ namespace KHAIScheduleBot.Models
         public List<Day> Days { get; set; } = new List<Day>();
         public override string ToString()
         {
-            return string.Join('\n', this.Days);
+            return "```" + string.Join("\n\n", this.Days) + "```";
         }
     }
 }

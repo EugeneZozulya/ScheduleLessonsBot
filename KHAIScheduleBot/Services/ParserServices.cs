@@ -15,13 +15,13 @@ namespace KHAIScheduleBot.Services
         /// <summary>
         /// IFileConfig object for read application config file.
         /// </summary>
-        private IFileConfig _fileConfig;
+        private IBotConfig _fileConfig;
 
         /// <summary>
         /// Constructor for initializing a parser. It gets filename from app.config.
         /// </summary>
         /// <param name="fileConfig">IFileConfig object for read application config file.</param>
-        public ParserServices(IFileConfig fileConfig)
+        public ParserServices(IBotConfig fileConfig)
         {
             _fileConfig = fileConfig;
             xmlDocument = new XmlDocument();

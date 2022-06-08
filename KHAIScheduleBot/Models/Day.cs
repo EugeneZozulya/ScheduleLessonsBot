@@ -8,7 +8,7 @@ namespace KHAIScheduleBot.Models
         public List<Couple> Couples { get; set; } = new List<Couple>();
         public override string ToString()
         {
-            return $"${this.DayName}$\n\n" + string.Join('\n', this.Couples);
+            return $"            📅{this.DayName}📅\n\n" + string.Join('\n', this.Couples);
         }
     }
 }

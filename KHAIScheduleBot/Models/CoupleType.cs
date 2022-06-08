@@ -12,7 +12,7 @@ namespace KHAIScheduleBot.Models
         {
             string result = string.Empty;
             if (string.IsNullOrEmpty(Classroom))
-                result = ":sunglasses:Пари не має:sunglasses:";
+                result = "😎Пари не має😎";
             else
                 result = $"{this.Classroom} {this.Discipline}\n" + string.Join('\n', this.Teachers);
             return result;
