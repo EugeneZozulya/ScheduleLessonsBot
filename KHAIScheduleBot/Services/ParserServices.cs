@@ -1,5 +1,6 @@
 ﻿using System.Xml;
 using KHAIScheduleBot.Models;
+using KHAIScheduleBot.Extansions;
 
 namespace KHAIScheduleBot.Services
 {
@@ -28,8 +29,14 @@ namespace KHAIScheduleBot.Services
             string path = _fileConfig.FileDataFileName;
             xmlDocument.Load(path);
         }
-
-        public Group GetSchedule(string groupId, string dayOfWeek = null, string typeWeek = null)
+        /// <summary>
+        /// Get schedule of the couples for some group.
+        /// </summary>
+        /// <param name="groupId">Group's id</param>
+        /// <param name="dayOfWeek">Some day of week, such as: Monday, Tuesday, Wednesday, Thursday, Friday, None - all week.</param>
+        /// <param name="typeWeek">Some type of week, such as: denominator, numerator, None - both type.</param>
+        /// <returns>Group class object with parsed schedule from file. </returns>
+        public Group GetSchedule(string groupId, DayType dayOfWeek = DayType.None, WeekType typeWeek = WeekType.None)
         {
             Group group = new Group();
             XmlElement xmlElement = xmlDocument.GetElementById(groupId);
@@ -38,9 +45,9 @@ namespace KHAIScheduleBot.Services
             List<Day> days = new List<Day>();
             foreach(XmlNode day in xmlElement.ChildNodes)
             {
-                string dayType = day.Attributes["type"].InnerText;
+                DayType dayType = day.Attributes["type"].InnerText.GetDayType();
 
-                if (!string.IsNullOrEmpty(dayOfWeek) && dayOfWeek != dayType)
+                if (dayOfWeek!=DayType.None && dayOfWeek != dayType)
                     continue;
 
                 Day d = new Day();
@@ -58,9 +65,9 @@ namespace KHAIScheduleBot.Services
                     XmlNodeList coupleChilds = couple.ChildNodes[1].ChildNodes;
                     for (int i = 0; i < coupleChilds.Count; i++)
                     {
-                        if (i == 0 && coupleChilds.Count == 2 && typeWeek == "Знаменник")
+                        if (i == 0 && coupleChilds.Count == 2 && typeWeek == WeekType.Denomanator)
                             continue;
-                        if (i == 1 && typeWeek == "Чисельник")
+                        if (i == 1 && typeWeek == WeekType.Numerator)
                             break;
                         CoupleType coupleType = new CoupleType();
                         coupleType.Classroom = coupleChilds[i].FirstChild.InnerText;

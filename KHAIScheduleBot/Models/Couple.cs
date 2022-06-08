@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace KHAIScheduleBot.Models
+﻿namespace KHAIScheduleBot.Models
 {
     public class Couple
     {

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using KHAIScheduleBot.Extansions;
 
 namespace KHAIScheduleBot.Models
 {
@@ -7,7 +8,7 @@ namespace KHAIScheduleBot.Models
         /// <summary>
         /// Day's name.
         /// </summary>
-        public string DayName { get; set; } = string.Empty;
+        public DayType DayName { get; set; } = DayType.None;
         /// <summary>
         /// Couples on this day.
         /// </summary>
@@ -18,7 +19,7 @@ namespace KHAIScheduleBot.Models
         /// <returns> String representation of an Day object. </returns>
         public override string ToString()
         {
-            return $"            📅{this.DayName}📅\n\n" + string.Join('\n', this.Couples);
+            return $"            📅{this.DayName.GetString()}📅\n\n" + string.Join('\n', this.Couples);
         }
     }
 }

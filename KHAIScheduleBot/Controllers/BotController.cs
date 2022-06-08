@@ -1,16 +1,10 @@
 ﻿using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
-using Telegram.Bot.Types.InlineQueryResults;
-using Telegram.Bot.Types.InputFiles;
 using Telegram.Bot.Types.ReplyMarkups;
-using System;
-using System.Threading.Tasks;
 using Telegram.Bot;
-using System.Threading;
-using System.IO;
-using System.Linq;
 using KHAIScheduleBot.Services;
+using KHAIScheduleBot.Extansions;
 using KHAIScheduleBot.Models;
 
 namespace KHAIScheduleBot.Controllers
@@ -19,19 +13,26 @@ namespace KHAIScheduleBot.Controllers
     public class BotController
     {
         #region Dependency injection
+        // seervice for parsing the data.
         private readonly IParserService _parserService;
+        // Client of the telegram bot.
         private ITelegramBotClient _botClient;
+        // service for parsing configuration from config file.
         private readonly IBotConfig _botConfig;
         #endregion
         #region Fields
+        // group id
         private string groupId;
-        private string typeOfWeek;
+        // type of week.
+        private WeekType typeOfWeek;
+        // talk that now setting group id.
         private bool isGroup;
+        // talk that now setting day.
         private bool isDay;
+        // talk that now setting type of week id.
         private bool isTypeOfWeek;
+        // List with all groups id.
         private List<string> groupsID;
-        private string[] days;
-        private string[] weeks;
         #endregion
         /// <summary>
         /// Contructor for initialize BotController.
@@ -42,8 +43,7 @@ namespace KHAIScheduleBot.Controllers
         {
             _parserService = parserService;
             _botConfig = botConfig;
-            days = new string[] { "Понеділок", "Вівторок", "Середа", "Четвер", "П'ятниця" };
-            weeks = new string[] { "Чисельник", "Знаменник", "Обидва" };
+            typeOfWeek = WeekType.Both;
         }
         /// <summary>
         /// Procces handle error.
@@ -134,9 +134,9 @@ namespace KHAIScheduleBot.Controllers
         {
             string data = callbackQuery.Data;
 
-            if (days.Contains(data))
+            if (data.GetDayType()!=DayType.None)
                 data = "day";
-            else if (weeks.Contains(data))
+            else if (data.GetWeekType()!=WeekType.None)
                 data = "week";
             else if (groupsID != null && groupsID.Contains(data))
                 data = "group";
@@ -300,7 +300,8 @@ namespace KHAIScheduleBot.Controllers
             //send user message where the bot asks the user to select group
             if (message.Text == "🖌Встановити групу" || (commands.Length > 1 && commands[1].Contains("set")))
             {
-                this.groupsID = _parserService.GetAllGroupsId();
+                if(this.groupsID==null)
+                    this.groupsID = _parserService.GetAllGroupsId();
                 textMessage = "👥Оберіть групу👥";
                 IReplyMarkup inlineReplyMarkup = FillGroupIdInlineKeyboard();
                 isGroup = true;
@@ -312,7 +313,7 @@ namespace KHAIScheduleBot.Controllers
             //set group
             if (this.isGroup)
             {
-                if (this.groupsID.IndexOf(message.Text)>0)
+                if (this.groupsID.IndexOf(message.Text)>=0)
                 {
                     textMessage = "Групу встановлено.";
                     this.groupId = message.Text;
@@ -348,11 +349,11 @@ namespace KHAIScheduleBot.Controllers
                     new[]
                     {
                         // first row
-                        new []{ InlineKeyboardButton.WithCallbackData(this.weeks[0]) },
+                        new []{ InlineKeyboardButton.WithCallbackData(WeekType.Numerator.GetString()) },
                         // second row
-                        new [] { InlineKeyboardButton.WithCallbackData(this.weeks[1]) },
+                        new [] { InlineKeyboardButton.WithCallbackData(WeekType.Denomanator.GetString()) },
                         // third row
-                        new [] { InlineKeyboardButton.WithCallbackData(this.weeks[2]) }
+                        new [] { InlineKeyboardButton.WithCallbackData(WeekType.Both.GetString()) }
                     });
                 isTypeOfWeek = true;
                 return await _botClient.SendTextMessageAsync(chatId: message.Chat.Id,
@@ -362,10 +363,10 @@ namespace KHAIScheduleBot.Controllers
             //set typeofweek
             if (this.isTypeOfWeek)
             {
-                if (this.weeks.Contains(message.Text))
+                this.typeOfWeek = message.Text.GetWeekType();
+                if (typeOfWeek != WeekType.None)
                 {
                     textMessage = "Тип тижню встановлено.";
-                    this.typeOfWeek = message.Text;
                     isTypeOfWeek = !isTypeOfWeek;
                 }
                 else
@@ -374,10 +375,10 @@ namespace KHAIScheduleBot.Controllers
             //send type of week to the user 
             else
             {
-                if (string.IsNullOrEmpty(this.typeOfWeek))
+                if (this.typeOfWeek== WeekType.None)
                     textMessage = "Тип тижня не встановленно.";
                 else
-                    textMessage = $"Тип тижня: {this.typeOfWeek}";
+                    textMessage = $"Тип тижня: {this.typeOfWeek.GetString()}";
             }
 
             return await _botClient.SendTextMessageAsync(chatId: message.Chat.Id,
@@ -400,15 +401,15 @@ namespace KHAIScheduleBot.Controllers
                             new[]
                             {
                             // first row
-                            new []{ InlineKeyboardButton.WithCallbackData(this.days[0]) },
+                            new []{ InlineKeyboardButton.WithCallbackData(DayType.Monday.GetString()) },
                             // second row
-                            new [] { InlineKeyboardButton.WithCallbackData(this.days[1]) },
+                            new [] { InlineKeyboardButton.WithCallbackData(DayType.Tuesday.GetString()) },
                             // third row
-                            new [] { InlineKeyboardButton.WithCallbackData(this.days[2]) },
+                            new [] { InlineKeyboardButton.WithCallbackData(DayType.Wednesday.GetString()) },
                             // fourth row
-                            new [] { InlineKeyboardButton.WithCallbackData(this.days[3]) },
+                            new [] { InlineKeyboardButton.WithCallbackData(DayType.Thursday.GetString()) },
                             // fifth row
-                            new [] { InlineKeyboardButton.WithCallbackData(this.days[4]) }
+                            new [] { InlineKeyboardButton.WithCallbackData(DayType.Friday.GetString()) }
                             });
                     isDay = true;
                     return await _botClient.SendTextMessageAsync(chatId: message.Chat.Id,
@@ -419,9 +420,10 @@ namespace KHAIScheduleBot.Controllers
                 //get schedule for some day
                 if (this.isDay)
                 {
-                    if (days.Contains(message.Text))
+                    DayType day = message.Text.GetDayType();
+                    if (day!=DayType.None)
                     {
-                        Group group = _parserService.GetSchedule(this.groupId, message.Text, typeOfWeek);
+                        Group group = _parserService.GetSchedule(this.groupId, day, typeOfWeek);
                         textMessage = group.ToString();
                         isDay = !isDay;
                         mode = ParseMode.Markdown;
@@ -432,7 +434,7 @@ namespace KHAIScheduleBot.Controllers
                 //get schedule for whole week
                 else
                 {
-                    Group group = _parserService.GetSchedule(this.groupId, null, typeOfWeek);
+                    Group group = _parserService.GetSchedule(this.groupId, DayType.None, typeOfWeek);
                     textMessage = group.ToString();
                     mode = ParseMode.Markdown;
                 }

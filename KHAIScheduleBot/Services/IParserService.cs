@@ -10,10 +10,10 @@ namespace KHAIScheduleBot.Services
         /// Get schedule of the couples for some group.
         /// </summary>
         /// <param name="groupId">Group's id</param>
-        /// <param name="dayOfWeek">Some day of week, such as: Monday, Tuesday, Wednesday, Thursday, Friday, null - all week.</param>
-        /// <param name="typeWeek">Some type of week, such as: denominator, numerator, null - both type.</param>
+        /// <param name="dayOfWeek">Some day of week, such as: Monday, Tuesday, Wednesday, Thursday, Friday, None - all week.</param>
+        /// <param name="typeWeek">Some type of week, such as: denominator, numerator, None - both type.</param>
         /// <returns>Group class object with parsed schedule from file. </returns>
-        Group GetSchedule(string groupId, string dayOfWeek = null, string typeWeek = null);
+        Group GetSchedule(string groupId, DayType dayOfWeek = DayType.None, WeekType typeWeek = WeekType.None);
         /// <summary>
         /// Get all groups id.
         /// </summary>

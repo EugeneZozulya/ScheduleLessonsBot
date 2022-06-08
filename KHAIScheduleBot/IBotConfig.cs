@@ -1,7 +1,7 @@
 ﻿namespace KHAIScheduleBot
 {
     /// <summary>
-    /// Contract for reading config file.
+    /// Contract for parsing configuration from config file.
     /// </summary>
     public interface IBotConfig
     {
