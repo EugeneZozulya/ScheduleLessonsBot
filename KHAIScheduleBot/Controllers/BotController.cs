@@ -283,7 +283,7 @@ namespace KHAIScheduleBot.Controllers
         {
             string help = "❗️Такої команди не усніє❗️ скористайтеся командою /help або введіть / для переглянуд усіх" +
                 "достуних команд.";
-            if (message.Chat.Type == ChatType.Private)
+            if (message.Chat.Type != ChatType.Private)
                 help = $"❗️Такої команди не усніє❗️ скористайтеся командою /help{this._botConfig.BotName} або введіть / для переглянуд усіх" +
                 "достуних команд. Також можете скористуватися клавіатурою.";
 

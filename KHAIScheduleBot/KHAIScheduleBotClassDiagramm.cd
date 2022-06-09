@@ -1,17 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <ClassDiagram MajorVersion="1" MinorVersion="1">
-  <Class Name="KHAIScheduleBot.FileConfig">
-    <Position X="0.5" Y="0.5" Width="1.5" />
-    <TypeIdentifier>
-      <HashCode>AAAAAAQAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAA=</HashCode>
-      <FileName>FileConfig.cs</FileName>
-    </TypeIdentifier>
-    <Lollipop Position="0.2" />
-  </Class>
   <Class Name="KHAIScheduleBot.Services.ParserServices">
     <Position X="4.25" Y="0.5" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAgABAAAAAACAAAAAAAQAAAAAAAABAAAACAAAAAA=</HashCode>
+      <HashCode>AAQAAgABAAAAAAAAAAAAAAQAAAAAAAABAAAACAAAAAA=</HashCode>
       <FileName>Services\ParserServices.cs</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" />
@@ -61,22 +53,51 @@
   <Class Name="KHAIScheduleBot.Controllers.BotController">
     <Position X="8" Y="0.5" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>QAAgAAAAQAAEAQAAAAVAAQAGAQABAACACAgQEQAAQAQ=</HashCode>
+      <HashCode>AAAAAAAASAAEBQAABEVAAQAGAAABIACACAgCEQAEAAQ=</HashCode>
       <FileName>Controllers\BotController.cs</FileName>
     </TypeIdentifier>
   </Class>
-  <Interface Name="KHAIScheduleBot.IFileConfig">
-    <Position X="2.25" Y="0.5" Width="1.5" />
+  <Class Name="KHAIScheduleBot.BotConfig">
+    <Position X="0.5" Y="0.5" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAQAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAA=</HashCode>
-      <FileName>IFileConfig.cs</FileName>
+      <HashCode>AAAAAAAACAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAACA=</HashCode>
+      <FileName>BotConfig.cs</FileName>
     </TypeIdentifier>
-  </Interface>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="KHAIScheduleBot.Extansions.DayTypeExtansion">
+    <Position X="4.25" Y="5.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Extansions\DayTypeExtansion.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KHAIScheduleBot.Extansions.StringExtension">
+    <Position X="6" Y="4.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAABAAgAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Extansions\StringExtension.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KHAIScheduleBot.Extansions.WeekTypeExtansion">
+    <Position X="6" Y="5.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Extansions\WeekTypeExtansion.cs</FileName>
+    </TypeIdentifier>
+  </Class>
   <Interface Name="KHAIScheduleBot.Services.IParserService">
     <Position X="6" Y="0.5" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAACAAAAAAAQAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <HashCode>AAQAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAA=</HashCode>
       <FileName>Services\IParserService.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="KHAIScheduleBot.IBotConfig">
+    <Position X="2.25" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAACAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAACA=</HashCode>
+      <FileName>IBotConfig.cs</FileName>
     </TypeIdentifier>
   </Interface>
   <Font Name="Segoe UI" Size="9" />
